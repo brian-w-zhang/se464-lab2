@@ -1,0 +1,9 @@
+secrets.sh
+.env
+.DS_Store
+.venv/
+node_modules/
+dist/
+*.pem
+*_accessKeys.csv
+*_credentials.csv
