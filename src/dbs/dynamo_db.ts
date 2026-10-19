@@ -157,6 +157,11 @@ export default class DynamoDB implements IDatabase {
   }
 
   async updateUser(patch: UserPatchRequest): Promise<void> {
+    // gRPC (proto3) sends unset string fields as "", so treat "" as not provided
+    const email = patch.email || undefined;
+    const password = patch.password || undefined;
+    patch = { ...patch, email, password };
+
     let command: UpdateCommand;
 
     // update both email and password
