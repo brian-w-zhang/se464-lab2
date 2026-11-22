@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import bodyParser from "body-parser";
+import logger from "../logger";
 import { AllProductsRequest, Order, OrderRequest, ProductRequest, UserPatchRequest, UserRequest } from "../types";
 
 export default class RestServer implements IServer {
@@ -20,6 +21,27 @@ export default class RestServer implements IServer {
     this.server.use(cors());
     this.server.use(morgan("tiny"));
     this.server.use(bodyParser.json());
+
+    // Log every incoming request with its params/query and a running count.
+    // Under PM2 cluster mode each worker keeps its own count (see pid).
+    let requestCount = 0;
+    this.server.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+      requestCount++;
+      const start = Date.now();
+      res.on("finish", () => {
+        logger.info(`Request ${req.method} ${req.path}`, {
+          method: req.method,
+          path: req.originalUrl,
+          route: req.route?.path,
+          params: req.params,
+          query: req.query,
+          status: res.statusCode,
+          durationMs: Date.now() - start,
+          totalRequests: requestCount,
+        });
+      });
+      next();
+    });
 
     this.server.get("/", (req: express.Request, res: express.Response) => res.send("Hello, World!"));
 
@@ -107,7 +129,7 @@ export default class RestServer implements IServer {
     }); // Updates a user's email or password
 
     this.server.listen(port, () => {
-      console.log(`REST server listening on port ${port}`);
+      logger.info(`REST server listening on port ${port}`);
     });
   }
 }
