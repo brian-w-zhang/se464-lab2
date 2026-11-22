@@ -26,10 +26,10 @@ export default class RestServer implements IServer {
     // Under PM2 cluster mode each worker keeps its own count (see pid).
     let requestCount = 0;
     this.server.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      requestCount++;
+      const requestNumber = ++requestCount; // capture on arrival
       const start = Date.now();
       res.on("finish", () => {
-        logger.info(`[worker ${WORKER}] Request #${requestCount} ${req.method} ${req.originalUrl}`, {
+        logger.info(`[worker ${WORKER}] Request #${requestNumber} ${req.method} ${req.originalUrl}`, {
           method: req.method,
           path: req.originalUrl,
           route: req.route?.path,
@@ -37,7 +37,7 @@ export default class RestServer implements IServer {
           query: req.query,
           status: res.statusCode,
           durationMs: Date.now() - start,
-          totalRequests: requestCount,
+          totalRequests: requestNumber,
         });
       });
       next();
