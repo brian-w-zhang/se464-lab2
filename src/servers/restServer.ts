@@ -128,8 +128,13 @@ export default class RestServer implements IServer {
       res.send(response);
     }); // Updates a user's email or password
 
-    this.server.listen(port, () => {
+    const httpServer = this.server.listen(port, () => {
       logger.info(`REST server listening on port ${port}`);
     });
+    // Keep idle connections open longer than the ALB's 60s idle timeout (and
+    // the benchmarker's reused sockets); Node's 5s default causes
+    // "socket hang up" / 502s when the client reuses a socket the server closed.
+    httpServer.keepAliveTimeout = 65_000;
+    httpServer.headersTimeout = 66_000;
   }
 }
