@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import bodyParser from "body-parser";
-import logger from "../logger";
+import logger, { WORKER } from "../logger";
 import { AllProductsRequest, Order, OrderRequest, ProductRequest, UserPatchRequest, UserRequest } from "../types";
 
 export default class RestServer implements IServer {
@@ -29,7 +29,7 @@ export default class RestServer implements IServer {
       requestCount++;
       const start = Date.now();
       res.on("finish", () => {
-        logger.info(`Request ${req.method} ${req.path}`, {
+        logger.info(`[worker ${WORKER}] Request #${requestCount} ${req.method} ${req.originalUrl}`, {
           method: req.method,
           path: req.originalUrl,
           route: req.route?.path,
